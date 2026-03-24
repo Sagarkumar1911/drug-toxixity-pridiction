@@ -1,0 +1,86 @@
+{
+  "NR-AR": {
+    "labeled": 7018,
+    "positive": 300,
+    "negative": 6718,
+    "pos_rate_pct": 4.3,
+    "class_weight": 22.4
+  },
+  "NR-AR-LBD": {
+    "labeled": 6529,
+    "positive": 233,
+    "negative": 6296,
+    "pos_rate_pct": 3.6,
+    "class_weight": 27.0
+  },
+  "NR-AhR": {
+    "labeled": 6322,
+    "positive": 751,
+    "negative": 5571,
+    "pos_rate_pct": 11.9,
+    "class_weight": 7.4
+  },
+  "NR-Aromatase": {
+    "labeled": 5603,
+    "positive": 283,
+    "negative": 5320,
+    "pos_rate_pct": 5.1,
+    "class_weight": 18.8
+  },
+  "NR-ER": {
+    "labeled": 5989,
+    "positive": 773,
+    "negative": 5216,
+    "pos_rate_pct": 12.9,
+    "class_weight": 6.7
+  },
+  "NR-ER-LBD": {
+    "labeled": 6727,
+    "positive": 341,
+    "negative": 6386,
+    "pos_rate_pct": 5.1,
+    "class_weight": 18.7
+  },
+  "NR-PPAR-gamma": {
+    "labeled": 6231,
+    "positive": 179,
+    "negative": 6052,
+    "pos_rate_pct": 2.9,
+    "class_weight": 33.8
+  },
+  "SR-ARE": {
+    "labeled": 5636,
+    "positive": 908,
+    "negative": 4728,
+    "pos_rate_pct": 16.1,
+    "class_weight": 5.2
+  },
+  "SR-ATAD5": {
+    "labeled": 6836,
+    "positive": 260,
+    "negative": 6576,
+    "pos_rate_pct": 3.8,
+    "class_weight": 25.3
+  },
+  "SR-HSE": {
+    "labeled": 6250,
+    "positive": 355,
+    "negative": 5895,
+    "pos_rate_pct": 5.7,
+    "class_weight": 16.6
+  },
+  "SR-MMP": {
+    "labeled": 5616,
+    "positive": 895,
+    "negative": 4721,
+    "pos_rate_pct": 15.9,
+    "class_weight": 5.3
+  },
+  "SR-p53": {
+    "labeled": 6551,
+    "positive": 411,
+    "negative": 6140,
+    "pos_rate_pct": 6.3,
+    "class_weight": 14.9
+  }
+}

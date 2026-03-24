@@ -1,0 +1,46 @@
+{
+  "top_rdkit_descriptors": [
+    {
+      "feature": "NumAliphaticRings",
+      "importance": 0.01299
+    },
+    {
+      "feature": "NumAromaticRings",
+      "importance": 0.012256
+    },
+    {
+      "feature": "RingCount",
+      "importance": 0.012078
+    },
+    {
+      "feature": "MolWt",
+      "importance": 0.004948
+    },
+    {
+      "feature": "LabuteASA",
+      "importance": 0.004668
+    }
+  ],
+  "top_maccs_keys": [
+    {
+      "feature": "maccs_145",
+      "importance": 0.00857
+    },
+    {
+      "feature": "maccs_125",
+      "importance": 0.00584
+    },
+    {
+      "feature": "maccs_162",
+      "importance": 0.005542
+    },
+    {
+      "feature": "maccs_135",
+      "importance": 0.004356
+    },
+    {
+      "feature": "maccs_44",
+      "importance": 0.003498
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "NR-AR": {
+    "xgboost": 0.7789,
+    "dnn": 0.7493,
+    "rf": 0.7933,
+    "ensemble": 0.8007
+  },
+  "NR-AR-LBD": {
+    "xgboost": 0.8137,
+    "dnn": 0.8436,
+    "rf": 0.8229,
+    "ensemble": 0.8606
+  },
+  "NR-AhR": {
+    "xgboost": 0.8318,
+    "dnn": 0.8363,
+    "rf": 0.8419,
+    "ensemble": 0.8565
+  },
+  "NR-Aromatase": {
+    "xgboost": 0.7752,
+    "dnn": 0.7372,
+    "rf": 0.7533,
+    "ensemble": 0.7889
+  },
+  "NR-ER": {
+    "xgboost": 0.7705,
+    "dnn": 0.75,
+    "rf": 0.7817,
+    "ensemble": 0.7921
+  },
+  "NR-ER-LBD": {
+    "xgboost": 0.805,
+    "dnn": 0.8119,
+    "rf": 0.8391,
+    "ensemble": 0.8447
+  },
+  "NR-PPAR-gamma": {
+    "xgboost": 0.597,
+    "dnn": 0.6654,
+    "rf": 0.6412,
+    "ensemble": 0.6611
+  },
+  "SR-ARE": {
+    "xgboost": 0.7419,
+    "dnn": 0.744,
+    "rf": 0.7282,
+    "ensemble": 0.7748
+  },
+  "SR-ATAD5": {
+    "xgboost": 0.747,
+    "dnn": 0.7491,
+    "rf": 0.7643,
+    "ensemble": 0.7834
+  },
+  "SR-HSE": {
+    "xgboost": 0.8038,
+    "dnn": 0.8336,
+    "rf": 0.8108,
+    "ensemble": 0.8514
+  },
+  "SR-MMP": {
+    "xgboost": 0.8597,
+    "dnn": 0.8506,
+    "rf": 0.8502,
+    "ensemble": 0.8776
+  },
+  "SR-p53": {
+    "xgboost": 0.7644,
+    "dnn": 0.7754,
+    "rf": 0.7393,
+    "ensemble": 0.7894
+  }
+}
