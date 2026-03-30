@@ -1,9 +1,3 @@
-"""
-app/app.py
-Purpose : Streamlit prediction app for drug toxicity
-Run     : streamlit run app/app.py
-"""
-
 import os
 import sys
 import json
@@ -142,6 +136,8 @@ RDKIT_DESCS = [
 
 
 def extract_features(mol):
+    # Fix Deprecation Warning: AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048, useChirality=True)
+    # Using the standard Morgan Fingerprint call for now to ensure all versions work
     morgan = np.array(
         AllChem.GetMorganFingerprintAsBitVect(
             mol, 2, nBits=2048, useChirality=True
@@ -281,237 +277,187 @@ def draw_molecule(mol, size=(300, 250)):
 # ════════════════════════════════════════════════════════════════
 # STREAMLIT APP
 # ════════════════════════════════════════════════════════════════
+def get_app_styles():
+    return """
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    .stApp { background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4, b, strong { color: #0f172a !important; font-family: 'Outfit', sans-serif; }
+    .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px 0 rgb(0 0 0/0.1); margin-bottom: 20px; }
+    .hero-box { background: #1e293b; padding: 30px; border-radius: 15px; color: white !important; text-align: center; margin-bottom: 30px; }
+    .hero-box h1 { color: white !important; }
+    .hero-box p { color: #94a3b8 !important; }
+    .prop-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+    .prop-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; }
+    .prop-box .lbl { font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
+    .prop-box .val { font-size: 1rem; color: #0f172a; font-weight: 800; }
+    .res-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
+    .pill-safe { background: #dcfce7; color: #166534; }
+    .pill-toxic { background: #fee2e2; color: #991b1b; }
+    section[data-testid="stSidebar"] { background-color: #0f172a !important; }
+    section[data-testid="stSidebar"] * { color: #f8fafc !important; }
+    .stProgress > div > div > div > div { background-color: #3b82f6; }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+</style>
+"""
+
 def main():
     st.set_page_config(
-        page_title="ToxPredict",
+        page_title="ToxPredict Intelligence",
         page_icon="🧬",
         layout="wide",
         initial_sidebar_state="expanded"
     )
 
-    st.markdown("""
-    <style>
-    .main-title {
-        font-size: 2.5rem; font-weight: 700;
-        color: #1a1a2e; text-align: center;
-        padding: 1rem 0;
-    }
-    .subtitle {
-        font-size: 1.1rem; color: #666;
-        text-align: center; margin-bottom: 2rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown(
-        '<div class="main-title">🧬 ToxPredict</div>',
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        '<div class="subtitle">AI-powered drug toxicity '
-        'prediction across 12 biological assays</div>',
-        unsafe_allow_html=True
-    )
+    # ── Style Injection ───────────────────────────────────────────────
+    st.markdown(get_app_styles(), unsafe_allow_html=True)
 
     # Sidebar
     with st.sidebar:
-        st.header("About")
-        st.markdown("""
-        **ToxPredict** uses an ensemble of 3 ML models:
-        - XGBoost
-        - Deep Neural Network
-        - Random Forest
-
-        Trained on **Tox21 dataset**
-        (~7,800 compounds, 12 assays)
-
-        **Test AUC: 0.7628**
-        """)
-
-        st.header("Example SMILES")
+        st.markdown("## 🧠 Neural Engine")
+        st.caption("Active Stack: XGB + DNN + RF")
+        st.markdown("---")
+        st.markdown("### 🧪 Quick-Launch SMILES")
         examples = {
-            "Paracetamol": "CC(=O)Nc1ccc(O)cc1",
-            "Aspirin":     "CC(=O)Oc1ccccc1C(=O)O",
-            "Caffeine":    "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
-            "Ibuprofen":   "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
-            "Bisphenol A": "CC(c1ccc(O)cc1)(c1ccc(O)cc1)C",
+            "💊 Paracetamol": "CC(=O)Nc1ccc(O)cc1",
+            "🩹 Aspirin":     "CC(=O)Oc1ccccc1C(=O)O",
+            "☕ Caffeine":    "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+            "🏃 Ibuprofen":   "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
+            "☣️ Bisphenol A": "CC(c1ccc(O)cc1)(c1ccc(O)cc1)C",
         }
         for name, smi in examples.items():
             if st.button(name, use_container_width=True):
                 st.session_state['smiles'] = smi
 
-        st.header("Settings")
-        threshold = st.slider(
-            "Toxicity threshold", 0.1, 0.9, 0.5, 0.05
-        )
-        focus_task = st.selectbox(
-            "SHAP analysis task", TARGET_COLS, index=7
-        )
+        st.markdown("---")
+        st.markdown("### ⚙️ Engine Parameters")
+        threshold = st.slider("Conf. Threshold", 0.1, 0.9, 0.5, 0.05)
+        focus_task = st.selectbox("Intelligence Focus", TARGET_COLS, index=7)
+        st.markdown("---")
+        st.markdown("**Version 2.3.0**")
 
-    # Load models
-    with st.spinner("Loading models..."):
+    # Hero
+    st.markdown("""
+        <div class="hero-box">
+            <h1>ToxPredict Engine</h1>
+            <p>High-Fidelity Toxicology Prediction Framework</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Core Loading
+    with st.spinner("Calibrating Decision Matrix..."):
         try:
-            (xgb_models, dnn_model,
-             rf_models, meta_models,
-             feature_names) = load_models()
-            st.success("Models loaded successfully")
+            (xgb_models, dnn_model, rf_models, meta_models, feature_names) = load_models()
         except Exception as e:
-            st.error(f"Model loading failed: {e}")
+            st.error(f"Engine Fault: {e}")
             return
 
-    # SMILES Input
-    st.subheader("Enter a SMILES string")
-    default_smiles = st.session_state.get(
-        'smiles', 'CC(=O)Nc1ccc(O)cc1'
-    )
-    smiles = st.text_input(
-        "SMILES",
-        value=default_smiles,
-        placeholder="e.g. CC(=O)Nc1ccc(O)cc1",
-        label_visibility="collapsed"
-    )
+    # User Input
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.markdown("#### 🔍 Molecular Sequence Analysis")
+    default_smiles = st.session_state.get('smiles', 'CC(=O)Nc1ccc(O)cc1')
+    smiles = st.text_input("Enter sequence", value=default_smiles, placeholder="e.g. CC(=O)Nc1ccc(O)cc1", label_visibility="collapsed")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if not smiles:
-        st.info("Enter a SMILES string to get predictions")
+        st.info("Awaiting input to begin simulation.")
         return
 
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
-        st.error("Invalid SMILES. Please check and try again.")
+        st.error("Simulation Aborted: Invalid SMILES detected.")
         return
 
-    with st.spinner("Computing predictions..."):
-        (xgb_probs, dnn_probs,
-         rf_probs, ens_probs,
-         features) = predict_toxicity(
-            mol, xgb_models, dnn_model,
-            rf_models, meta_models
-        )
+    # Simulation
+    with st.spinner("Running bio-toxicological simulations..."):
+        (xgb_probs, dnn_probs, rf_probs, ens_probs, features) = predict_toxicity(mol, xgb_models, dnn_model, rf_models, meta_models)
 
-    col1, col2, col3 = st.columns([1, 1.5, 1.5])
+    # Interface
+    c_left, c_right = st.columns([1, 1.8], gap="small")
 
-    # Column 1 — Molecule + Properties
-    with col1:
-        st.subheader("Molecule")
-        img = draw_molecule(mol)
+    with c_left:
+        st.markdown("#### 🧪 Molecular Topology")
+        img = draw_molecule(mol, size=(600, 500))
         if img:
-            st.image(img, use_column_width=True)
+            st.image(img, use_container_width=True)
         else:
             st.code(smiles)
 
-        st.subheader("Properties")
+        st.markdown("#### 🔬 Physicochemical Profile")
         props = {
-            "Mol. Weight": f"{Descriptors.MolWt(mol):.1f}",
-            "LogP":        f"{Descriptors.MolLogP(mol):.2f}",
-            "TPSA":        f"{Descriptors.TPSA(mol):.1f}",
-            "HBD":         f"{Descriptors.NumHDonors(mol)}",
-            "HBA":         f"{Descriptors.NumHAcceptors(mol)}",
-            "Rings":       f"{Descriptors.RingCount(mol)}",
-            "Heavy atoms": f"{Descriptors.HeavyAtomCount(mol)}",
+            "Weight": f"{Descriptors.MolWt(mol):.1f}",
+            "LogP": f"{Descriptors.MolLogP(mol):.2f}",
+            "TPSA": f"{Descriptors.TPSA(mol):.1f}",
+            "Donor": f"{Descriptors.NumHDonors(mol)}",
+            "Acceptor": f"{Descriptors.NumHAcceptors(mol)}",
+            "Rings": f"{Descriptors.RingCount(mol)}",
         }
-        for prop, val in props.items():
-            ca, cb = st.columns([1.5, 1])
-            ca.write(prop)
-            cb.write(f"**{val}**")
+        
+        # Fixed HTML Rendering: No Indentation
+        prop_html = '<div class="prop-row">'
+        for p, v in props.items():
+            prop_html += f'<div class="prop-box"><div class="lbl">{p}</div><div class="val">{v}</div></div>'
+        prop_html += '</div>'
+        st.markdown(prop_html, unsafe_allow_html=True)
 
-        n_toxic  = int((ens_probs >= threshold).sum())
-        risk_pct = n_toxic / len(TARGET_COLS) * 100
-        st.subheader("Overall Risk")
-        if risk_pct >= 50:
-            st.error(f"HIGH RISK — {n_toxic}/12 assays")
-        elif risk_pct >= 25:
-            st.warning(f"MODERATE — {n_toxic}/12 assays")
-        else:
-            st.success(f"LOW RISK — {n_toxic}/12 assays")
+        # Score
+        n_tox = int((ens_probs >= threshold).sum())
+        score = n_tox / len(TARGET_COLS) * 100
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style="background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center;">
+                <p style="font-size: 0.7rem; color: #64748b; text-transform: uppercase;">Final Tox Index</p>
+                <h2 style="font-size: 3rem; margin: 5px 0;">{score:.0f}%</h2>
+                <p style="color: #94a3b8; font-size: 0.8rem;">Detected in {n_tox}/12 active assays</p>
+            </div>
+        """, unsafe_allow_html=True)
 
-    # Column 2 — Predictions
-    with col2:
-        st.subheader("Toxicity Predictions (Ensemble)")
+    with c_right:
+        st.markdown("#### 📊 Decision Intelligence Logs")
         for i, col in enumerate(TARGET_COLS):
-            prob  = float(ens_probs[i])
-            toxic = prob >= threshold
-            color = "#E24B4A" if toxic else "#1D9E75"
-            label = "TOXIC" if toxic else "SAFE"
-            st.markdown(f"**{col}** — {TARGET_NAMES[col]}")
-            ca, cb = st.columns([3, 1])
-            with ca:
-                st.progress(prob)
-            with cb:
-                st.markdown(
-                    f'<span style="color:{color};'
-                    f'font-weight:bold">'
-                    f'{prob:.1%} {label}</span>',
-                    unsafe_allow_html=True
-                )
+            prob = float(ens_probs[i])
+            tox = prob >= threshold
+            pill = "pill-toxic" if tox else "pill-safe"
+            text = "TOXIC" if tox else "SAFE"
+            st.markdown(f"""
+                <div class="res-card">
+                    <div style="font-weight: 600; font-size: 0.9rem;">{col} <span style="font-weight: 300; color: #94a3b8; font-size: 0.75rem;">— {TARGET_NAMES[col]}</span></div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-weight: 800;">{prob:.1%}</span>
+                        <span class="pill {pill}">{text}</span>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+            st.progress(prob)
 
-    # Column 3 — SHAP + Model Agreement
-    with col3:
-        st.subheader(f"SHAP Analysis — {focus_task}")
-        top_names, top_vals = get_shap_for_molecule(
-            features, xgb_models,
-            feature_names, task=focus_task
-        )
-
-        fig, ax = plt.subplots(figsize=(7, 5))
-        colors = ['#E24B4A' if v > 0 else '#378ADD'
-                  for v in top_vals]
-        short  = [n[:20]+'...' if len(n)>20 else n
-                  for n in top_names]
-        ax.barh(range(len(top_names)),
-                top_vals[::-1],
-                color=colors[::-1],
-                edgecolor='none', alpha=0.85)
+    # Explainer
+    st.markdown("---")
+    st.markdown(f"#### 📈 Attribution Analysis ({focus_task})")
+    a1, a2 = st.columns([2, 1])
+    with a1:
+        top_names, top_vals = get_shap_for_molecule(features, xgb_models, feature_names, task=focus_task)
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.barh(range(len(top_names)), top_vals[::-1], color=['#f43f5e' if v > 0 else '#3b82f6' for v in top_vals[::-1]], alpha=0.9)
         ax.set_yticks(range(len(top_names)))
-        ax.set_yticklabels(short[::-1], fontsize=8)
-        ax.axvline(0, color='black', linewidth=0.8)
-        ax.set_xlabel('SHAP value', fontsize=9)
-        ax.set_title(
-            f'Feature impact — {focus_task}',
-            fontsize=10, fontweight='bold'
-        )
+        ax.set_yticklabels([n[:30] for n in top_names[::-1]], fontsize=9)
+        ax.set_xlabel('Score Impact')
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
-
-        st.subheader("Model Agreement")
+    with a2:
+        st.markdown("##### Consensus Logs")
         idx = TARGET_COLS.index(focus_task)
-        comp_df = pd.DataFrame({
-            'Model': ['XGBoost', 'DNN', 'RF', 'Ensemble'],
-            'Prediction': [
-                f"{xgb_probs[idx]:.1%}",
-                f"{dnn_probs[idx]:.1%}",
-                f"{rf_probs[idx]:.1%}",
-                f"{ens_probs[idx]:.1%}",
-            ]
-        })
-        st.dataframe(comp_df, hide_index=True,
-                     use_container_width=True)
-
-    # Full Table
-    st.subheader("Full Prediction Table")
-    results_df = pd.DataFrame({
-        'Task':     TARGET_COLS,
-        'Assay':    [TARGET_NAMES[c] for c in TARGET_COLS],
-        'XGBoost':  [f"{p:.3f}" for p in xgb_probs],
-        'DNN':      [f"{p:.3f}" for p in dnn_probs],
-        'RF':       [f"{p:.3f}" for p in rf_probs],
-        'Ensemble': [f"{p:.3f}" for p in ens_probs],
-        'Result':   ['TOXIC' if p >= threshold else 'SAFE'
-                     for p in ens_probs]
-    })
-    st.dataframe(results_df, hide_index=True,
-                 use_container_width=True)
-
-    csv = results_df.to_csv(index=False)
-    st.download_button(
-        label="Download predictions as CSV",
-        data=csv,
-        file_name=f"toxicity_{smiles[:20]}.csv",
-        mime="text/csv"
-    )
-
+        st.dataframe(pd.DataFrame({
+            'Engine': ['XGB', 'DNN', 'RF', 'Meta'],
+            'Confidence': [f"{xgb_probs[idx]:.1%}", f"{dnn_probs[idx]:.1%}", f"{rf_probs[idx]:.1%}", f"{ens_probs[idx]:.1%}"]
+        }), hide_index=True, use_container_width=True) # Note: user version may require width="stretch" but 1.34.0+ uses width
+        st.info("Aggregated confidence values represent the weighted average of the neural stack.")
 
 if __name__ == '__main__':
     main()
