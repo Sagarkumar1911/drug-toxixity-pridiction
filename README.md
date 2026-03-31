@@ -22,23 +22,34 @@ from molecular structure using the Tox21 dataset.
 - Ensemble outperforms any single model by 3-4% AUC
 
 ## How to Run
-# Install
-conda activate toxpred
 
-# Preprocess
-python src/preprocess.py
+### Prerequisites
+- All dependencies are pre-installed in the `toxpred` conda environment
+- Python packages: numpy, pandas, matplotlib, streamlit, scikit-learn, xgboost, torch, shap, scipy, rdkit, dgl, tqdm
 
-# Train
-python src/train.py
+### Running the Application
+Double-click `run_app.bat` or run:
+```
+C:\Users\dell\anaconda3\envs\toxpred\python.exe app.py
+```
 
-# Evaluate
-python src/evaluate.py
+### Alternative: Manual Commands
+```bash
+# Preprocess data
+C:\Users\dell\anaconda3\envs\toxpred\python.exe src/preprocess.py
 
-# Explain
-python src/explain.py
+# Train models
+C:\Users\dell\anaconda3\envs\toxpred\python.exe src/train.py
 
-# App
-streamlit run app.py
+# Evaluate models
+C:\Users\dell\anaconda3\envs\toxpred\python.exe src/evaluate.py
+
+# Generate explanations
+C:\Users\dell\anaconda3\envs\toxpred\python.exe src/explain.py
+
+# Run Streamlit app
+C:\Users\dell\anaconda3\envs\toxpred\python.exe -m streamlit run app.py
+```
 
 ## Dataset
 Tox21 — 7831 compounds, 12 toxicity assays

@@ -10,3 +10,6 @@ scipy>=1.7.0
 rdkit>=2021.09.01
 dgl>=0.6.0
 tqdm>=4.62.0
+
+# Note: All packages are installed in the 'toxpred' conda environment
+# To run the app, use: C:\Users\dell\anaconda3\envs\toxpred\python.exe app.py
