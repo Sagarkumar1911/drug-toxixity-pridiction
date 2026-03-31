@@ -27,13 +27,28 @@ from molecular structure using the Tox21 dataset.
 - All dependencies are pre-installed in the `toxpred` conda environment
 - Python packages: numpy, pandas, matplotlib, streamlit, scikit-learn, xgboost, torch, shap, scipy, rdkit, dgl, tqdm
 
-### Running the Application
-Double-click `run_app.bat` or run:
-```
+## Deployment
+
+### Streamlit Cloud
+1. Push this repository to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Connect your GitHub repository
+4. Set main file path to `app.py`
+5. The app will automatically install dependencies from `requirements.txt`
+
+### Local Development
+```bash
+# Using conda environment (recommended)
 C:\Users\dell\anaconda3\envs\toxpred\python.exe app.py
+
+# Or double-click run_app.bat
 ```
 
-### Alternative: Manual Commands
+### Troubleshooting
+If deployment fails:
+1. Check that all model files exist in the `models/` directory
+2. Ensure `data/processed/` contains the required data files
+3. Try the minimal requirements.txt versions for better compatibility
 ```bash
 # Preprocess data
 C:\Users\dell\anaconda3\envs\toxpred\python.exe src/preprocess.py

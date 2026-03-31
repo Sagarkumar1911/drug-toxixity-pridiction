@@ -1,0 +1,21 @@
+# System dependencies for RDKit
+libboost-all-dev
+libboost-python-dev
+libboost-system-dev
+libboost-thread-dev
+libcairo2-dev
+libeigen3-dev
+libffi-dev
+libfreetype6-dev
+libglib2.0-dev
+libgomp1
+libharfbuzz-dev
+libjpeg-dev
+liblcms2-dev
+libopenjp2-7-dev
+libpng-dev
+libtiff-dev
+libwebp-dev
+libxext6
+libxrender-dev
+zlib1g-dev
