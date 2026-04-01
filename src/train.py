@@ -1,6 +1,7 @@
 
 
 import os
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
 import json
 import pickle
 import time
@@ -24,9 +25,20 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 # ── Config ────────────────────────────────────────────────────────
-PROCESSED_DIR = 'data/processed/'
-MODELS_DIR    = 'models/'
-DEVICE        = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+IS_CLOUD = os.path.exists('/mount/src')
+
+if IS_CLOUD:
+    # Streamlit Cloud paths
+    BASE_DIR      = '/mount/src/drug-toxixity-pridiction'
+    PROCESSED_DIR = f'{BASE_DIR}/data/processed/'
+    MODELS_DIR    = f'{BASE_DIR}/models/'
+else:
+    # Local paths
+    PROCESSED_DIR = 'data/processed/'
+    MODELS_DIR    = 'models/'
+
+# CPU only for cloud compatibility
+DEVICE = torch.device('cpu')
 
 TARGET_COLS = [
     'NR-AR', 'NR-AR-LBD', 'NR-AhR', 'NR-Aromatase',
