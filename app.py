@@ -39,11 +39,18 @@ import torch.nn as nn
 import shap
 
 # ── Config ────────────────────────────────────────────────────────
-MODELS_DIR    = 'models/'
-PROCESSED_DIR = 'data/processed/'
-DEVICE        = torch.device(
-    'cuda' if torch.cuda.is_available() else 'cpu'
-)
+# ── Config ────────────────────────────────────────────────────────
+IS_CLOUD = os.path.exists('/mount/src')
+
+if IS_CLOUD:
+    BASE_DIR      = '/mount/src/drug-toxixity-pridiction'
+    MODELS_DIR    = f'{BASE_DIR}/models/'
+    PROCESSED_DIR = f'{BASE_DIR}/Data/processed/'
+else:
+    MODELS_DIR    = 'models/'
+    PROCESSED_DIR = 'data/processed/'
+
+DEVICE = torch.device('cpu')  # cloud has no GPU
 
 TARGET_COLS = [
     'NR-AR', 'NR-AR-LBD', 'NR-AhR', 'NR-Aromatase',
