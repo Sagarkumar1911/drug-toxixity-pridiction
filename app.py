@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '' 
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
 import sys
 import json
 import pickle
@@ -16,14 +16,12 @@ sys.path.append(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)
 )))
 
-# RDKit — safe imports only
 from rdkit import Chem
 from rdkit.Chem import (
     Descriptors, AllChem, MACCSkeys,
     rdMolDescriptors
 )
 
-# Draw — optional, handle DLL error
 RDKIT_DRAW = False
 try:
     from rdkit.Chem import Draw
@@ -31,14 +29,10 @@ try:
 except Exception:
     Draw = None
 
-# PyTorch
 import torch
 import torch.nn as nn
-
-# SHAP
 import shap
 
-# ── Config ────────────────────────────────────────────────────────
 # ── Config ────────────────────────────────────────────────────────
 IS_CLOUD = os.path.exists('/mount/src')
 
@@ -50,7 +44,7 @@ else:
     MODELS_DIR    = 'models/'
     PROCESSED_DIR = 'data/processed/'
 
-DEVICE = torch.device('cpu')  # cloud has no GPU
+DEVICE = torch.device('cpu')
 
 TARGET_COLS = [
     'NR-AR', 'NR-AR-LBD', 'NR-AhR', 'NR-Aromatase',
@@ -144,8 +138,6 @@ RDKIT_DESCS = [
 
 
 def extract_features(mol):
-    # Fix Deprecation Warning: AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048, useChirality=True)
-    # Using the standard Morgan Fingerprint call for now to ensure all versions work
     morgan = np.array(
         AllChem.GetMorganFingerprintAsBitVect(
             mol, 2, nBits=2048, useChirality=True
@@ -196,9 +188,7 @@ def load_models():
     with open(f'{PROCESSED_DIR}feature_names.json') as f:
         feature_names = json.load(f)
 
-    sample_features = apply_variance_selector(
-        np.zeros(2245)
-    )
+    sample_features = apply_variance_selector(np.zeros(2245))
     input_dim = len(sample_features)
     dnn_model = MultiTaskToxNet(input_dim).to(DEVICE)
     dnn_model.load_state_dict(
@@ -225,9 +215,7 @@ def predict_toxicity(mol, xgb_models, dnn_model,
         for col in TARGET_COLS
     ])
 
-    X_tensor = torch.tensor(
-        X, dtype=torch.float32
-    ).to(DEVICE)
+    X_tensor = torch.tensor(X, dtype=torch.float32).to(DEVICE)
     with torch.no_grad():
         dnn_probs = torch.sigmoid(
             dnn_model(X_tensor)
@@ -250,26 +238,33 @@ def predict_toxicity(mol, xgb_models, dnn_model,
     return xgb_probs, dnn_probs, rf_probs, ens_probs, features
 
 
-# ── SHAP ──────────────────────────────────────────────────────────
+# ── SHAP — Fixed with TreeExplainer ──────────────────────────────
 def get_shap_for_molecule(features, xgb_models,
                            feature_names, task='SR-ARE'):
     try:
         xgb_clf   = xgb_models[task]
-        explainer = shap.Explainer(
-            xgb_clf, features.reshape(1, -1)
-        )
-        shap_obj  = explainer(features.reshape(1, -1))
-        shap_vals = shap_obj.values[0]
-        top_idx   = np.argsort(
-            np.abs(shap_vals)
-        )[::-1][:10]
-        return ([feature_names[i] for i in top_idx],
-                shap_vals[top_idx])
+
+        # TreeExplainer works correctly for single molecule
+        explainer = shap.TreeExplainer(xgb_clf)
+        shap_vals = explainer.shap_values(
+            features.reshape(1, -1)
+        )[0]
+
+        top_idx   = np.argsort(np.abs(shap_vals))[::-1][:10]
+        top_names = [feature_names[i] for i in top_idx]
+        top_vals  = shap_vals[top_idx]
+
+        return top_names, top_vals
+
     except Exception:
-        imp     = xgb_models[task].feature_importances_
-        top_idx = np.argsort(imp)[::-1][:10]
-        return ([feature_names[i] for i in top_idx],
-                imp[top_idx])
+        # Fallback to XGBoost built-in importance
+        xgb_clf = xgb_models[task]
+        imp      = xgb_clf.feature_importances_
+        top_idx  = np.argsort(imp)[::-1][:10]
+        return (
+            [feature_names[i] for i in top_idx],
+            imp[top_idx]
+        )
 
 
 # ── Draw Molecule ─────────────────────────────────────────────────
@@ -313,6 +308,7 @@ def get_app_styles():
 </style>
 """
 
+
 def main():
     st.set_page_config(
         page_title="ToxPredict Intelligence",
@@ -321,10 +317,8 @@ def main():
         initial_sidebar_state="expanded"
     )
 
-    # ── Style Injection ───────────────────────────────────────────────
     st.markdown(get_app_styles(), unsafe_allow_html=True)
 
-    # Sidebar
     with st.sidebar:
         st.markdown("## 🧠 Neural Engine")
         st.caption("Active Stack: XGB + DNN + RF")
@@ -343,12 +337,13 @@ def main():
 
         st.markdown("---")
         st.markdown("### ⚙️ Engine Parameters")
-        threshold = st.slider("Conf. Threshold", 0.1, 0.9, 0.5, 0.05)
-        focus_task = st.selectbox("Intelligence Focus", TARGET_COLS, index=7)
+        threshold  = st.slider("Conf. Threshold", 0.1, 0.9, 0.5, 0.05)
+        focus_task = st.selectbox(
+            "Intelligence Focus", TARGET_COLS, index=7
+        )
         st.markdown("---")
         st.markdown("**Version 2.3.0**")
 
-    # Hero
     st.markdown("""
         <div class="hero-box">
             <h1>ToxPredict Engine</h1>
@@ -356,19 +351,26 @@ def main():
         </div>
     """, unsafe_allow_html=True)
 
-    # Core Loading
     with st.spinner("Calibrating Decision Matrix..."):
         try:
-            (xgb_models, dnn_model, rf_models, meta_models, feature_names) = load_models()
+            (xgb_models, dnn_model,
+             rf_models, meta_models,
+             feature_names) = load_models()
         except Exception as e:
             st.error(f"Engine Fault: {e}")
             return
 
-    # User Input
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.markdown("#### 🔍 Molecular Sequence Analysis")
-    default_smiles = st.session_state.get('smiles', 'CC(=O)Nc1ccc(O)cc1')
-    smiles = st.text_input("Enter sequence", value=default_smiles, placeholder="e.g. CC(=O)Nc1ccc(O)cc1", label_visibility="collapsed")
+    default_smiles = st.session_state.get(
+        'smiles', 'CC(=O)Nc1ccc(O)cc1'
+    )
+    smiles = st.text_input(
+        "Enter sequence",
+        value=default_smiles,
+        placeholder="e.g. CC(=O)Nc1ccc(O)cc1",
+        label_visibility="collapsed"
+    )
     st.markdown('</div>', unsafe_allow_html=True)
 
     if not smiles:
@@ -380,11 +382,14 @@ def main():
         st.error("Simulation Aborted: Invalid SMILES detected.")
         return
 
-    # Simulation
     with st.spinner("Running bio-toxicological simulations..."):
-        (xgb_probs, dnn_probs, rf_probs, ens_probs, features) = predict_toxicity(mol, xgb_models, dnn_model, rf_models, meta_models)
+        (xgb_probs, dnn_probs,
+         rf_probs, ens_probs,
+         features) = predict_toxicity(
+            mol, xgb_models, dnn_model,
+            rf_models, meta_models
+        )
 
-    # Interface
     c_left, c_right = st.columns([1, 1.8], gap="small")
 
     with c_left:
@@ -397,75 +402,121 @@ def main():
 
         st.markdown("#### 🔬 Physicochemical Profile")
         props = {
-            "Weight": f"{Descriptors.MolWt(mol):.1f}",
-            "LogP": f"{Descriptors.MolLogP(mol):.2f}",
-            "TPSA": f"{Descriptors.TPSA(mol):.1f}",
-            "Donor": f"{Descriptors.NumHDonors(mol)}",
+            "Weight":   f"{Descriptors.MolWt(mol):.1f}",
+            "LogP":     f"{Descriptors.MolLogP(mol):.2f}",
+            "TPSA":     f"{Descriptors.TPSA(mol):.1f}",
+            "Donor":    f"{Descriptors.NumHDonors(mol)}",
             "Acceptor": f"{Descriptors.NumHAcceptors(mol)}",
-            "Rings": f"{Descriptors.RingCount(mol)}",
+            "Rings":    f"{Descriptors.RingCount(mol)}",
         }
-        
-        # Fixed HTML Rendering: No Indentation
         prop_html = '<div class="prop-row">'
         for p, v in props.items():
-            prop_html += f'<div class="prop-box"><div class="lbl">{p}</div><div class="val">{v}</div></div>'
+            prop_html += (
+                f'<div class="prop-box">'
+                f'<div class="lbl">{p}</div>'
+                f'<div class="val">{v}</div>'
+                f'</div>'
+            )
         prop_html += '</div>'
         st.markdown(prop_html, unsafe_allow_html=True)
 
-        # Score
         n_tox = int((ens_probs >= threshold).sum())
         score = n_tox / len(TARGET_COLS) * 100
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"""
-            <div style="background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center;">
-                <p style="font-size: 0.7rem; color: #64748b; text-transform: uppercase;">Final Tox Index</p>
-                <h2 style="font-size: 3rem; margin: 5px 0;">{score:.0f}%</h2>
-                <p style="color: #94a3b8; font-size: 0.8rem;">Detected in {n_tox}/12 active assays</p>
+            <div style="background:white;border:2px solid #e2e8f0;
+                        border-radius:12px;padding:20px;text-align:center;">
+                <p style="font-size:0.7rem;color:#64748b;
+                           text-transform:uppercase;">Final Tox Index</p>
+                <h2 style="font-size:3rem;margin:5px 0;">{score:.0f}%</h2>
+                <p style="color:#94a3b8;font-size:0.8rem;">
+                    Detected in {n_tox}/12 active assays</p>
             </div>
         """, unsafe_allow_html=True)
 
     with c_right:
         st.markdown("#### 📊 Decision Intelligence Logs")
         for i, col in enumerate(TARGET_COLS):
-            prob = float(ens_probs[i])
-            tox = prob >= threshold
-            pill = "pill-toxic" if tox else "pill-safe"
-            text = "TOXIC" if tox else "SAFE"
+            prob  = float(ens_probs[i])
+            tox   = prob >= threshold
+            pill  = "pill-toxic" if tox else "pill-safe"
+            text  = "TOXIC" if tox else "SAFE"
             st.markdown(f"""
                 <div class="res-card">
-                    <div style="font-weight: 600; font-size: 0.9rem;">{col} <span style="font-weight: 300; color: #94a3b8; font-size: 0.75rem;">— {TARGET_NAMES[col]}</span></div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-weight: 800;">{prob:.1%}</span>
+                    <div style="font-weight:600;font-size:0.9rem;">
+                        {col}
+                        <span style="font-weight:300;color:#94a3b8;
+                                     font-size:0.75rem;">
+                            — {TARGET_NAMES[col]}
+                        </span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-weight:800;">{prob:.1%}</span>
                         <span class="pill {pill}">{text}</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             st.progress(prob)
 
-    # Explainer
     st.markdown("---")
     st.markdown(f"#### 📈 Attribution Analysis ({focus_task})")
     a1, a2 = st.columns([2, 1])
+
     with a1:
-        top_names, top_vals = get_shap_for_molecule(features, xgb_models, feature_names, task=focus_task)
+        top_names, top_vals = get_shap_for_molecule(
+            features, xgb_models,
+            feature_names, task=focus_task
+        )
         fig, ax = plt.subplots(figsize=(10, 5))
-        ax.barh(range(len(top_names)), top_vals[::-1], color=['#f43f5e' if v > 0 else '#3b82f6' for v in top_vals[::-1]], alpha=0.9)
+        bar_colors = [
+            '#f43f5e' if v > 0 else '#3b82f6'
+            for v in top_vals[::-1]
+        ]
+        ax.barh(
+            range(len(top_names)),
+            top_vals[::-1],
+            color=bar_colors,
+            alpha=0.9
+        )
         ax.set_yticks(range(len(top_names)))
-        ax.set_yticklabels([n[:30] for n in top_names[::-1]], fontsize=9)
+        ax.set_yticklabels(
+            [n[:30] for n in top_names[::-1]], fontsize=9
+        )
+        ax.axvline(0, color='black', linewidth=0.8)
         ax.set_xlabel('Score Impact')
+        ax.set_title(
+            f'Feature attribution — {focus_task}\n'
+            f'Red = increases toxicity risk   '
+            f'Blue = decreases toxicity risk',
+            fontsize=9
+        )
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
+
     with a2:
         st.markdown("##### Consensus Logs")
         idx = TARGET_COLS.index(focus_task)
-        st.dataframe(pd.DataFrame({
-            'Engine': ['XGB', 'DNN', 'RF', 'Meta'],
-            'Confidence': [f"{xgb_probs[idx]:.1%}", f"{dnn_probs[idx]:.1%}", f"{rf_probs[idx]:.1%}", f"{ens_probs[idx]:.1%}"]
-        }), hide_index=True, use_container_width=True) # Note: user version may require width="stretch" but 1.34.0+ uses width
-        st.info("Aggregated confidence values represent the weighted average of the neural stack.")
+        st.dataframe(
+            pd.DataFrame({
+                'Engine':     ['XGB', 'DNN', 'RF', 'Meta'],
+                'Confidence': [
+                    f"{xgb_probs[idx]:.1%}",
+                    f"{dnn_probs[idx]:.1%}",
+                    f"{rf_probs[idx]:.1%}",
+                    f"{ens_probs[idx]:.1%}",
+                ]
+            }),
+            hide_index=True,
+            use_container_width=True
+        )
+        st.info(
+            "Aggregated confidence values represent "
+            "the weighted average of the neural stack."
+        )
+
 
 if __name__ == '__main__':
     main()
